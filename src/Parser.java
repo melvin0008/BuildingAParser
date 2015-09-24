@@ -24,7 +24,9 @@ public class Parser {
 //			new Assign();
 //		}
 		new Program();
+		Code.gen(Code.end());
 		Code.output();
+		
 	}
 }
 
@@ -163,6 +165,9 @@ class Code {
 		return "iconst_" + i;
 	}
 	
+	public static String end(){
+		return "return";
+	}
 	
 	public static String id(Character v, Integer i) {
 		int c;
