@@ -14,28 +14,29 @@ public class Parser {
 		System.out.println("Enter an expression, end with \"end\"!\n");
 //		while(Lexer.lex()!=21)
 //		{
-			Lexer.lex();
-			new Decls();
-			Lexer.lex();
-			new Assign();
-			Lexer.lex();
-			new Assign();
-			Lexer.lex();
-			new Assign();
+//			Lexer.lex();
+//			new Decls();
+//			Lexer.lex();
+//			new Assign();
+//			Lexer.lex();
+//			new Assign();
+//			Lexer.lex();
+//			new Assign();
 //		}
+		new Program();
 		Code.output();
 	}
 }
 
 class Program{
 	Decls d;
-	Stmts s;
+//	Stmts s;
 
 	public Program() {
 		Lexer.lex();
 		d = new Decls();
-		Lexer.lex();
-		s= new Stmts();
+		while(Lexer.lex()!=21)
+			new Stmnt();
 	}
 }
 
@@ -56,11 +57,6 @@ class Decls{
 	}
 }
 
-class Stmts{
-	public Stmts(){
-		
-	}
-}
 class Stmnt{
 	Assign a;
 	public Stmnt(){
@@ -81,6 +77,11 @@ class Assign{ //assign  ->  id '=' expr ';'
 			}
 		}
 	}
+}
+
+class Rexpr{ //rexpr -> expr ('<'|'>'|'=='|'!=') expr
+	
+	
 }
 
 class Expr   { // expr -> term (+ | -) expr | term
