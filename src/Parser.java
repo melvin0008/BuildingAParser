@@ -12,14 +12,55 @@ import java.util.*;
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
-		while(Lexer.lex()!=21)
-		{
+//		while(Lexer.lex()!=21)
+//		{
+			Lexer.lex();
+			new Decls();
+			Lexer.lex();
 			new Assign();
-		}
+			Lexer.lex();
+			new Assign();
+			Lexer.lex();
+			new Assign();
+//		}
 		Code.output();
 	}
 }
 
+class Program{
+	Decls d;
+	Stmts s;
+
+	public Program() {
+		Lexer.lex();
+		d = new Decls();
+		Lexer.lex();
+		s= new Stmts();
+	}
+}
+
+class Decls{
+
+	public Decls(){
+		if(Lexer.nextToken==Token.KEY_INT){
+			Lexer.lex();
+			if(Lexer.nextToken==Token.ID){
+				new Factor();
+				while(Lexer.nextToken==Token.COMMA){
+					Lexer.lex();
+					new Factor();
+				}
+			}
+		}
+		
+	}
+}
+
+class Stmts{
+	public Stmts(){
+		
+	}
+}
 class Stmnt{
 	Assign a;
 	public Stmnt(){
@@ -30,14 +71,14 @@ class Stmnt{
 class Assign{ //assign  ->  id '=' expr ';'
 	char id;
 	Expr e;
-	
+	Factor f;
 	public Assign(){
-		id = Lexer.nextChar;
-		Lexer.lex();
-		if(Lexer.nextToken == Token.ASSIGN_OP){
-			Lexer.lex();
-			e = new Expr();
-			Code.gen(Code.add_var(id));
+		if(Lexer.nextToken==Token.ID){
+			f= new Factor();
+			if(Lexer.nextToken == Token.ASSIGN_OP){
+				Lexer.lex();
+				e = new Expr();
+			}
 		}
 	}
 }
@@ -88,9 +129,9 @@ class Factor { // factor -> number | '(' expr ')'
 			Lexer.lex();
 			break;
 		case Token.ID: // id 
-			v= Lexer.nextChar;
-			Code.gen(Code.id(v));
+			v= Lexer.ident;
 			Lexer.lex();
+			Code.gen(Code.id(v,Lexer.nextToken));
 			break;
 		case Token.LEFT_PAREN: // '('
 			Lexer.lex();
@@ -121,17 +162,26 @@ class Code {
 		return "iconst_" + i;
 	}
 	
-	public static String add_var(char v){
+	
+	public static String id(Character v, Integer i) {
+		int c;
+		if(hm.containsKey(v)){
+			c=hm.get(v);
+			if(i==Token.ASSIGN_OP){
+				if (c > 3) return "istore " + c;
+				return "istore_" + c;
+			}
+			else{
+				if (c > 3) return "iload " + c;
+				return "iload_" + c;
+			}
+		}
+		
 		hm.put(v, counter);
-		if (counter > 3) return "istore " + counter++;
-		return "istore_" + counter++;
-	}
-	
-	
-	public static String id(Character v) {
-		int k=hm.get(v);
-		if (k > 3) return "iload " + k;
-		return "iload_" + k;
+		c=counter;
+		counter++;
+		return "";
+		
 	}
 
 	public static String opcode(char op) {
