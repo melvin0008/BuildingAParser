@@ -1,9 +1,16 @@
 /* 		OBJECT-ORIENTED RECOGNIZER FOR SIMPLE EXPRESSIONS
-stmnt ->
-assign  ->  id '=' expr ';'
-expr    -> term   (+ | -) expr | term
-term    -> factor (* | /) term | factor
-factor  -> int_lit | id |'(' expr ')'
+ program ->  decls stmts end
+      decls   ->  int idlist ';'
+      idlist  ->  id [',' idlist ]
+      stmts   ->  stmt [ stmts ]
+      stmt    ->  assign ';'| cmpd | cond | loop
+      assign  ->  id '=' expr
+      cmpd    ->  '{' stmts '}'
+      cond    ->  if '(' rexp ')' stmt [ else stmt ]
+      loop    ->  for '(' [assign] ';' [rexp] ';' [assign] ')' stmt
+	  rexp -> expr('<'|'>'|'=='|'!=')expr expr -> term [ ('+' | '-') expr ]
+	  term -> factor [ ('*' | '/') term ]
+	  factor -> int_lit | id | '(' expr ')'
 */
 
 import java.lang.System;
@@ -12,57 +19,68 @@ import java.util.*;
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
-//		while(Lexer.lex()!=21)
-//		{
-//			Lexer.lex();
-//			new Decls();
-//			Lexer.lex();
-//			new Assign();
-//			Lexer.lex();
-//			new Assign();
-//			Lexer.lex();
-//			new Assign();
-//		}
 		new Program();
-		Code.gen(Code.end());
 		Code.output();
-		
 	}
 }
 
 class Program{
 	Decls d;
-//	Stmts s;
-
+	Stmts s;
 	public Program() {
-		Lexer.lex();
-		d = new Decls();
-		while(Lexer.lex()!=21)
-			new Stmnt();
+		while(true) {
+			if(Lexer.lex() == 21) {
+				Code.gen(Code.spacePtr+": return");
+				break;
+			}
+			if(Lexer.nextToken == Token.KEY_INT)  {
+				Lexer.lex();
+				d = new Decls();
+			}
+		s= new Stmts();
+		}
 	}
 }
 
 class Decls{
-
+	IdList i;
 	public Decls(){
-		if(Lexer.nextToken==Token.KEY_INT){
-			Lexer.lex();
-			if(Lexer.nextToken==Token.ID){
-				new Factor();
-				while(Lexer.nextToken==Token.COMMA){
-					Lexer.lex();
-					new Factor();
-				}
+			i = new IdList();
 			}
+}
+
+class IdList {
+	IdList id;
+	public IdList() {
+		if(Lexer.nextToken==Token.ID){
+			new Factor();
+			if(Lexer.nextToken == Token.SEMICOLON)
+				return;
+			id = new IdList();
 		}
-		
+		else if(Lexer.nextToken==Token.COMMA) {
+				Lexer.lex();
+				id = new IdList();
+		}
 	}
 }
 
+class Stmts{
+	Stmnt s;
+	public Stmts(){
+		s = new Stmnt();
+	}
+}
 class Stmnt{
 	Assign a;
 	public Stmnt(){
-		a= new Assign();
+		switch(Lexer.nextToken) {
+		case Token.ID:
+			a= new Assign();
+			break;
+		default:
+			break;
+		}
 	}
 }
 
@@ -70,20 +88,18 @@ class Assign{ //assign  ->  id '=' expr ';'
 	char id;
 	Expr e;
 	Factor f;
+	char c;
 	public Assign(){
 		if(Lexer.nextToken==Token.ID){
-			f= new Factor();
+			c = Lexer.ident;
+			Lexer.lex();
 			if(Lexer.nextToken == Token.ASSIGN_OP){
 				Lexer.lex();
 				e = new Expr();
 			}
 		}
+		Code.gen(Code.id(c,Token.ASSIGN_OP));
 	}
-}
-
-class Rexpr{ //rexpr -> expr ('<'|'>'|'=='|'!=') expr
-	
-	
 }
 
 class Expr   { // expr -> term (+ | -) expr | term
@@ -98,7 +114,6 @@ class Expr   { // expr -> term (+ | -) expr | term
 			Lexer.lex();
 			e = new Expr();
 			Code.gen(Code.opcode(op));
-			
 		}
 	}
 }
@@ -133,8 +148,8 @@ class Factor { // factor -> number | '(' expr ')'
 			break;
 		case Token.ID: // id 
 			v= Lexer.ident;
-			Lexer.lex();
 			Code.gen(Code.id(v,Lexer.nextToken));
+			Lexer.lex();
 			break;
 		case Token.LEFT_PAREN: // '('
 			Lexer.lex();
@@ -152,50 +167,61 @@ class Code {
 	static String[] code = new String[100];
 	static int codeptr = 0;
 	static int counter= 0;
+	static int spacePtr=0;;
 	static Map<Character, Integer> hm = new HashMap<Character, Integer>();
 
 	public static void gen(String s) {
-		code[codeptr] = s;
+		if(!s.isEmpty()) {
+			code[codeptr] = s;
 		codeptr++;
+		}
 	}
 
 	public static String intcode(int i) {
-		if (i > 127) return "sipush " + i;
-		if (i > 5) return "bipush " + i;
-		return "iconst_" + i;
+		int a=spacePtr++;
+		if (i > 127) {
+			spacePtr++;
+			spacePtr++;
+			return a+": sipush " + i;
+		}
+		if (i > 5) {
+			spacePtr++;
+			return a+": bipush " + i;
+		}
+		return a+": iconst_" + i;
 	}
 	
-	public static String end(){
-		return "return";
-	}
 	
 	public static String id(Character v, Integer i) {
 		int c;
 		if(hm.containsKey(v)){
+			int space = spacePtr++;
 			c=hm.get(v);
 			if(i==Token.ASSIGN_OP){
-				if (c > 3) return "istore " + c;
-				return "istore_" + c;
+				if (c+1 > 3) return space+": istore " + Integer.toString(c+1);
+				return space+": istore_" + Integer.toString(c+1);
 			}
 			else{
-				if (c > 3) return "iload " + c;
-				return "iload_" + c;
+				if (c+1 > 3) return space+": iload " + Integer.toString(c+1);
+				return space+": iload_" + Integer.toString(c+1);
 			}
 		}
-		
-		hm.put(v, counter);
-		c=counter;
-		counter++;
-		return "";
+		else {
+			hm.put(v, counter);
+			c=counter;
+			counter++;
+			return "";
+		}
 		
 	}
 
 	public static String opcode(char op) {
+		int a = spacePtr++;
 		switch(op) {
-		case '+' : return "iadd";
-		case '-':  return "isub";
-		case '*':  return "imul";
-		case '/':  return "idiv";
+		case '+' : { return a+": iadd"; }
+		case '-':  { return a+": isub"; }
+		case '*':  { return a+": imul"; }
+		case '/':  { return a+": idiv"; }
 		default: return "";
 		}
 	}
