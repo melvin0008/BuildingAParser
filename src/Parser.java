@@ -204,11 +204,17 @@ class Code {
 			int space = spacePtr++;
 			c=hm.get(v);
 			if(i==Token.ASSIGN_OP){
-				if (c+1 > 3) return space+": istore " + Integer.toString(c+1);
+				if (c+1 > 3) { 
+					spacePtr++;
+					return space+": istore " + Integer.toString(c+1);
+				}
 				return space+": istore_" + Integer.toString(c+1);
 			}
 			else{
-				if (c+1 > 3) return space+": iload " + Integer.toString(c+1);
+				if (c+1 > 3) {
+					spacePtr++;
+					return space+": iload " + Integer.toString(c+1);
+				}	
 				return space+": iload_" + Integer.toString(c+1);
 			}
 		}
