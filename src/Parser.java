@@ -19,6 +19,7 @@ import java.util.*;
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
+		//Lexer.lex();
 		new Program();
 		Code.output();
 	}
@@ -30,7 +31,7 @@ class Program{
 	public Program() {
 		while(true) {
 			if(Lexer.lex() == 21) {
-				Code.gen(Code.spacePtr+": return");
+				Code.gen(Code.end());
 				break;
 			}
 			if(Lexer.nextToken == Token.KEY_INT)  {
@@ -51,22 +52,27 @@ class Decls{
 
 class IdList {
 	IdList id;
+	char v;
 	public IdList() {
 		if(Lexer.nextToken==Token.ID){
-			new Factor();
-			if(Lexer.nextToken == Token.SEMICOLON)
+			v= Lexer.ident;
+			Code.gen(Code.id(v,Lexer.nextToken));
+			Lexer.lex();
+			if(Lexer.nextToken == Token.SEMICOLON) {
+				Lexer.lex();
 				return;
-			id = new IdList();
-		}
-		else if(Lexer.nextToken==Token.COMMA) {
+			}
+			if(Lexer.nextToken == Token.COMMA) {
 				Lexer.lex();
 				id = new IdList();
+			}
 		}
 	}
 }
 
 class Stmts{
 	Stmnt s;
+	Stmts ss;
 	public Stmts(){
 		s = new Stmnt();
 	}
@@ -229,6 +235,9 @@ class Code {
 	public static void output() {
 		for (int i=0; i<codeptr; i++)
 			System.out.println(code[i]);
+	}
+	public static String end() {
+		return Code.spacePtr+": return";
 	}
 }
 
