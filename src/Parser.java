@@ -52,7 +52,7 @@ class IdList {
 			Code.gen(Code.id(v,Lexer.nextToken));
 			Lexer.lex();
 			if(Lexer.nextToken == Token.SEMICOLON) {
-				//Lexer.lex();
+				Lexer.lex();   //Comment this
 				return;
 			}
 			if(Lexer.nextToken == Token.COMMA) {
@@ -68,19 +68,18 @@ class Stmts{
 	Stmts ss;
 	public Stmts(){
 		s = new Stmnt();
-		if(Lexer.nextToken == Token.KEY_END) {
+		if(Lexer.lex() == Token.KEY_END) { 
 			Code.gen(Code.end());
 			return;
 		}
-		if(Lexer.nextToken == Token.SEMICOLON) {
-		    ss = new Stmts();
-		}
+		else
+			ss = new Stmts();
 	}
 }
 class Stmnt{
 	Assign a;
 	public Stmnt(){
-		Lexer.lex();
+		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
 		case Token.ID:
 			a= new Assign();
