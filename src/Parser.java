@@ -124,8 +124,6 @@ class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
 			e2 = new Expr();
 			Code.gen(Code.opcode(op));
 		}
-		
-		
 	}
 }
 
