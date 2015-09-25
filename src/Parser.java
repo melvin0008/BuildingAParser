@@ -20,7 +20,7 @@ import java.util.*;
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
-		//Lexer.lex();
+		Lexer.lex();
 		new Program();
 		Code.output();
 	}
@@ -30,23 +30,16 @@ class Program{
 	Decls d;
 	Stmts s;
 	public Program() {
-		while(true) {
-			if(Lexer.lex() == 21) {
-				Code.gen(Code.end());
-				break;
-			}
-			if(Lexer.nextToken == Token.KEY_INT)  {
-				Lexer.lex();
-				d = new Decls();
-			}
-		s= new Stmts();
-		}
+		d = new Decls();
+     	s=  new Stmts();
 	}
 }
-
+//d
 class Decls{
 	IdList i;
 	public Decls(){
+		if(Lexer.nextToken == Token.KEY_INT)
+			Lexer.lex();
 			i = new IdList();
 			}
 }
@@ -60,7 +53,7 @@ class IdList {
 			Code.gen(Code.id(v,Lexer.nextToken));
 			Lexer.lex();
 			if(Lexer.nextToken == Token.SEMICOLON) {
-				Lexer.lex();
+				Lexer.lex();   //Comment this
 				return;
 			}
 			if(Lexer.nextToken == Token.COMMA) {
@@ -76,12 +69,19 @@ class Stmts{
 	Stmts ss;
 	public Stmts(){
 		s = new Stmnt();
+		if(Lexer.lex() == Token.KEY_END) { 
+			Code.gen(Code.end());
+			return;
+		}
+		else
+			ss = new Stmts();
 	}
 }
 
 class Stmnt{
 	Assign a;
 	public Stmnt(){
+		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
 		case Token.ID:
 			a= new Assign();
@@ -223,11 +223,17 @@ class Code {
 			int space = spacePtr++;
 			c=hm.get(v);
 			if(i==Token.ASSIGN_OP){
-				if (c+1 > 3) return space+": istore " + Integer.toString(c+1);
+				if (c+1 > 3) { 
+					spacePtr++;
+					return space+": istore " + Integer.toString(c+1);
+				}
 				return space+": istore_" + Integer.toString(c+1);
 			}
 			else{
-				if (c+1 > 3) return space+": iload " + Integer.toString(c+1);
+				if (c+1 > 3) {
+					spacePtr++;
+					return space+": iload " + Integer.toString(c+1);
+				}	
 				return space+": iload_" + Integer.toString(c+1);
 			}
 		}
