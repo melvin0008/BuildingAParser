@@ -8,7 +8,8 @@
       cmpd    ->  '{' stmts '}'
       cond    ->  if '(' rexp ')' stmt [ else stmt ]
       loop    ->  for '(' [assign] ';' [rexp] ';' [assign] ')' stmt
-	  rexp -> expr('<'|'>'|'=='|'!=')expr expr -> term [ ('+' | '-') expr ]
+	  rexp -> expr('<'|'>'|'=='|'!=')expr 
+	  expr -> term [ ('+' | '-') expr ]
 	  term -> factor [ ('*' | '/') term ]
 	  factor -> int_lit | id | '(' expr ')'
 */
@@ -77,6 +78,7 @@ class Stmts{
 		s = new Stmnt();
 	}
 }
+
 class Stmnt{
 	Assign a;
 	public Stmnt(){
@@ -105,6 +107,25 @@ class Assign{ //assign  ->  id '=' expr ';'
 			}
 		}
 		Code.gen(Code.id(c,Token.ASSIGN_OP));
+	}
+}
+
+class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
+	Expr e1;
+	Expr e2;
+	char op;
+	
+	public Rexpr(){
+		e1 = new Expr();
+		int token = Lexer.nextToken;
+		if ( token == Token.GREATER_OP || token == Token.LESSER_OP || token == Token.EQ_OP || token == Token.NOT_EQ){
+			op=Lexer.nextChar;
+			Lexer.lex();
+			e2 = new Expr();
+			Code.gen(Code.opcode(op));
+		}
+		
+		
 	}
 }
 
