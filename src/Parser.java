@@ -158,32 +158,36 @@ class Cond{
 
 class Loop{
 	Assign a1,a2;
+	Stmnt s;
 	Rexpr r;
-	int flag,start1,end1,end2;
+	int flag,start1,end1,end2,cmpPtr,spacePtr;
 	public Loop(){
 		flag=0;
 		Lexer.lex();
 		Lexer.lex();
 //		if(Lexer.nextToken!=Token.SEMICOLON){
 			a1= new Assign();
+			spacePtr = Code.getSpacePtr();
 //		}
 //		if(Lexer.nextToken!=Token.SEMICOLON){
 			Lexer.lex();
+			cmpPtr=Code.getcodeptr();    //New code
 			r= new Rexpr();
 //			Lexer.lex();
 //		}
 		start1=Code.getcodeptr();
 		Lexer.lex();
 //		if(Lexer.nextToken!=Token.RIGHT_BRACE){
-			flag=1;
 			a2=new Assign();
 //			Lexer.lex();
 //		}
 		end1=Code.getcodeptr();
 		Lexer.lex();
-		new Stmnt();
+		s = new Stmnt();
 		end2=Code.getcodeptr();
 		Code.loop(start1,end1,end2);
+		Code.gen(Code.genGoTo(spacePtr));
+		Code.gen(Code.condition(cmpPtr,true));
 //		if(flag==1){
 //			
 //		}
@@ -310,15 +314,24 @@ class Code {
 		}
 		return "";
 	}
-	public static void swap(int i, int j){
-		String temp = code[i];
-		code[i] = code[j];
-		code[j] = temp;
-	}
 	public static void loop(int s1,int e1,int e2){
-		int temp=e1;
-		for (int i=s1;i<e1;i++){
-			swap(i,temp++);
+		String [] assin=  new String[e1-s1];
+		int ptr = 0,str1 = s1, count = assin.length;
+		for(int i=s1;i<e1;i++)
+			assin[ptr++] = code[i];
+		while(e2-e1 > 0) {
+			String a[] = code[str1].split(":");
+			String b[] = code[e1].split(":");
+			code[str1] = a[0]+":"+b[b.length-1];
+			e1++;
+			str1++;
+		}
+		while(count-- > 0) {
+			 e2--;
+			String a[] = assin[count].split(":");
+			String b[] = code[e2].split(":");
+			code[e2] = b[0]+":"+a[a.length-1];
+		   
 		}
 	}
 
@@ -387,5 +400,13 @@ class Code {
 	}
 	public static String end() {
 		return Code.spacePtr+": return";
+	}
+	public static String genGoTo(int loadStart) {
+		int a=spacePtr;
+		spacePtr+=3;
+		return a+": goto "+loadStart; 
+	}
+	public static int getSpacePtr() {
+		return spacePtr;
 	}
 }
