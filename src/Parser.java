@@ -8,7 +8,8 @@
       cmpd    ->  '{' stmts '}'
       cond    ->  if '(' rexp ')' stmt [ else stmt ]
       loop    ->  for '(' [assign] ';' [rexp] ';' [assign] ')' stmt
-	  rexp -> expr('<'|'>'|'=='|'!=')expr expr -> term [ ('+' | '-') expr ]
+	  rexp -> expr('<'|'>'|'=='|'!=')expr 
+	  expr -> term [ ('+' | '-') expr ]
 	  term -> factor [ ('*' | '/') term ]
 	  factor -> int_lit | id | '(' expr ')'
 */
@@ -40,7 +41,7 @@ class Decls{
 		if(Lexer.nextToken == Token.KEY_INT)
 			Lexer.lex();
 		i = new IdList();
-			}
+	}
 }
 
 class IdList {
@@ -80,14 +81,19 @@ class Stmts{
 			ss = new Stmts();
 	}
 }
+
 class Stmnt{
 	Assign a;
+	Cond c;
 	Cmpd cmpd;
 	public Stmnt(){
 		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
 		case Token.ID:
 			a = new Assign();
+			break;
+		case Token.KEY_IF:
+			c= new Cond();
 			break;
 		case Token.LEFT_BRACE:
 			Lexer.lex();
@@ -123,6 +129,44 @@ class Assign{ //assign  ->  id '=' expr ';'
 	}
 }
 
+class Cond{
+	Rexpr r;
+	Stmnt s1,s2;
+	int ptr;
+	public Cond(){
+		Lexer.lex();//Change this
+		Lexer.lex();
+		ptr=Code.getcodeptr();
+		r=new Rexpr();
+		Lexer.lex();
+		s1=new Stmnt();
+		if(Lexer.lex()!=Token.KEY_ELSE){
+			Code.gen(Code.condition(ptr,true));
+			return;
+		}
+		Code.gen(Code.condition(ptr,false));
+		Lexer.lex();
+		s2=new Stmnt();
+		
+	}	
+}
+
+class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
+	Expr e1;
+	Expr e2;
+	char op;
+	
+	public Rexpr(){
+		e1 = new Expr();
+		int token = Lexer.nextToken;
+		if ( token == Token.GREATER_OP || token == Token.LESSER_OP || token == Token.EQ_OP || token == Token.NOT_EQ){
+			Lexer.lex();
+			e2 = new Expr();
+			Code.gen(Code.opcoderexpr(token));
+		}
+	}
+}
+
 class Expr   { // expr -> term (+ | -) expr | term
 	Term t;
 	Expr e;
@@ -151,7 +195,7 @@ class Term    { // term -> factor (* | /) term | factor
 			Lexer.lex();
 			t = new Term();
 			Code.gen(Code.opcode(op));
-			}
+		}
 	}
 }
 
@@ -197,6 +241,10 @@ class Code {
 		codeptr++;
 		}
 	}
+	
+	public static int getcodeptr(){
+		return codeptr;
+	}
 
 	public static String intcode(int i) {
 		int a=spacePtr++;
@@ -212,6 +260,16 @@ class Code {
 		return a+": iconst_" + i;
 	}
 	
+	public static String condition(int i,Boolean b){
+		if(b){
+			code[i+2]=code[i+2]+" "+spacePtr;
+		}
+		else{
+			gen(spacePtr+++": "+"goto");
+			code[i+2]=code[i+2]+" "+spacePtr;
+		}
+		return "";
+	}
 	
 	public static String id(Character v, Integer i) {
 		int c;
@@ -249,6 +307,18 @@ class Code {
 		case '-':  { return a+": isub"; }
 		case '*':  { return a+": imul"; }
 		case '/':  { return a+": idiv"; }
+		default: return "";
+		}
+	}
+	
+	public static String opcoderexpr(int op) {
+		int a = spacePtr++;
+		String s = "if_icmp";
+		switch(op) {
+		case Token.GREATER_OP : { return a+": "+s+"ge"; }
+		case Token.LESSER_OP:  { return a+": "+s+"le"; }
+		case Token.EQ_OP:  { return a+": "+s+"ne"; }
+		case Token.NOT_EQ:  { return a+": "+s+"eq"; }
 		default: return "";
 		}
 	}
