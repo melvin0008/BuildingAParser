@@ -69,7 +69,7 @@ class Stmts{
 	Stmts ss;
 	public Stmts(){
 		s = new Stmnt();
-		if(Lexer.lex() == Token.KEY_END) { 
+		if(Lexer.nextToken== Token.KEY_END || Lexer.lex() == Token.KEY_END) { 
 			Code.gen(Code.end());
 			return;
 		}
@@ -83,9 +83,11 @@ class Stmts{
 }
 
 class Stmnt{
+
 	Assign a;
 	Cond c;
 	Cmpd cmpd;
+	Loop l;
 	public Stmnt(){
 		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
@@ -95,6 +97,9 @@ class Stmnt{
 		case Token.KEY_IF:
 		case Token.KEY_ELSE:
 			c= new Cond();
+			break;
+		case Token.KEY_FOR:
+			l=new Loop();
 			break;
 		case Token.LEFT_BRACE:
 			Lexer.lex();
@@ -133,7 +138,7 @@ class Assign{ //assign  ->  id '=' expr ';'
 class Cond{
 	Rexpr r;
 	Stmnt s1,s2;
-	int ptr;
+	int ptr,ptr2;
 	public Cond(){
 		if(Lexer.nextToken == Token.KEY_IF) {
 			Lexer.lex();//Change this
@@ -150,7 +155,46 @@ class Cond{
 			s2=new Stmnt();
 			return;
 		}		
+		ptr2=Code.getcodeptr();
+		Code.gen(Code.condition(ptr,false));
+		Lexer.lex();
+		s2=new Stmnt();
+		Code.gotofunc(ptr2);
 	}	
+}
+
+class Loop{
+	Assign a1,a2;
+	Rexpr r;
+	int flag,start1,end1,end2;
+	public Loop(){
+		flag=0;
+		Lexer.lex();
+		Lexer.lex();
+//		if(Lexer.nextToken!=Token.SEMICOLON){
+			a1= new Assign();
+//		}
+//		if(Lexer.nextToken!=Token.SEMICOLON){
+			Lexer.lex();
+			r= new Rexpr();
+//			Lexer.lex();
+//		}
+		start1=Code.getcodeptr();
+		Lexer.lex();
+//		if(Lexer.nextToken!=Token.RIGHT_BRACE){
+			flag=1;
+			a2=new Assign();
+//			Lexer.lex();
+//		}
+		end1=Code.getcodeptr();
+		Lexer.lex();
+		new Stmnt();
+		end2=Code.getcodeptr();
+		Code.loop(start1,end1,end2);
+//		if(flag==1){
+//			
+//		}
+	}
 }
 
 class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
@@ -267,10 +311,26 @@ class Code {
 			code[i+2]=code[i+2]+" "+spacePtr;
 		}
 		else{
-			gen(spacePtr+++": "+"goto");
+			gen(spacePtr+": "+"goto");
+			spacePtr+=3;
 			code[i+2]=code[i+2]+" "+spacePtr;
 		}
 		return "";
+	}
+	public static void swap(int i, int j){
+		String temp = code[i];
+		code[i] = code[j];
+		code[j] = temp;
+	}
+	public static void loop(int s1,int e1,int e2){
+		int temp=e1;
+		for (int i=s1;i<e1;i++){
+			swap(i,temp++);
+		}
+	}
+
+	public static void gotofunc(int i){
+		code[i]=code[i]+" "+spacePtr;	
 	}
 	
 	public static String id(Character v, Integer i) {
@@ -313,12 +373,15 @@ class Code {
 		}
 	}
 	
+	
+	
 	public static String opcoderexpr(int op) {
-		int a = spacePtr++;
+		int a = spacePtr;
+		spacePtr+=3;
 		String s = "if_icmp";
 		switch(op) {
-		case Token.GREATER_OP : { return a+": "+s+"ge"; }
-		case Token.LESSER_OP:  { return a+": "+s+"le"; }
+		case Token.GREATER_OP : { return a+": "+s+"le"; }
+		case Token.LESSER_OP:  { return a+": "+s+"ge"; }
 		case Token.EQ_OP:  { return a+": "+s+"ne"; }
 		case Token.NOT_EQ:  { return a+": "+s+"eq"; }
 		default: return "";
