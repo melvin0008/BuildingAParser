@@ -8,10 +8,10 @@
       cmpd    ->  '{' stmts '}'
       cond    ->  if '(' rexp ')' stmt [ else stmt ]
       loop    ->  for '(' [assign] ';' [rexp] ';' [assign] ')' stmt
-	  rexp    -> expr('<'|'>'|'=='|'!=')expr 
-	  expr    -> term [ ('+' | '-') expr ]
-	  term    -> factor [ ('*' | '/') term ]
-	  factor  -> int_lit | id | '(' expr ')'
+	  rexp -> expr('<'|'>'|'=='|'!=')expr 
+	  expr -> term [ ('+' | '-') expr ]
+	  term -> factor [ ('*' | '/') term ]
+	  factor -> int_lit | id | '(' expr ')'
 */
 
 import java.lang.System;
@@ -83,7 +83,6 @@ class Stmts{
 }
 
 class Stmnt{
-
 	Assign a;
 	Cond c;
 	Cmpd cmpd;
@@ -95,7 +94,6 @@ class Stmnt{
 			a = new Assign();
 			break;
 		case Token.KEY_IF:
-		case Token.KEY_ELSE:
 			c= new Cond();
 			break;
 		case Token.KEY_FOR:
@@ -140,21 +138,16 @@ class Cond{
 	Stmnt s1,s2;
 	int ptr,ptr2;
 	public Cond(){
-		if(Lexer.nextToken == Token.KEY_IF) {
-			Lexer.lex();//Change this
-			Lexer.lex();
-			ptr=Code.getcodeptr();
-			r=new Rexpr();
-			Lexer.lex();
-			s1=new Stmnt();
+		Lexer.lex();//Change this
+		Lexer.lex();
+		ptr=Code.getcodeptr();
+		r=new Rexpr();
+		Lexer.lex();
+		s1=new Stmnt();
+		if(Lexer.lex()!=Token.KEY_ELSE){
 			Code.gen(Code.condition(ptr,true));
-		}
-		if(Lexer.nextToken==Token.KEY_ELSE){
-			Code.gen(Code.condition(ptr,false));
-			Lexer.lex();
-			s2=new Stmnt();
 			return;
-		}		
+		}
 		ptr2=Code.getcodeptr();
 		Code.gen(Code.condition(ptr,false));
 		Lexer.lex();
@@ -396,5 +389,3 @@ class Code {
 		return Code.spacePtr+": return";
 	}
 }
-
-
