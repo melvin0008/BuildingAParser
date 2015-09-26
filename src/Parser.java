@@ -34,7 +34,7 @@ class Program{
      	s=  new Stmts();
 	}
 }
-//d
+
 class Decls{
 	IdList i;
 	public Decls(){
@@ -53,7 +53,7 @@ class IdList {
 			Code.gen(Code.id(v,Lexer.nextToken));
 			Lexer.lex();
 			if(Lexer.nextToken == Token.SEMICOLON) {
-				Lexer.lex();   //Comment this
+				Lexer.lex();   
 				return;
 			}
 			if(Lexer.nextToken == Token.COMMA) {
@@ -73,6 +73,10 @@ class Stmts{
 			Code.gen(Code.end());
 			return;
 		}
+		else if(Lexer.nextToken == Token.RIGHT_BRACE) {
+			//Lexer.lex();
+			return;
+		}
 		else
 			ss = new Stmts();
 	}
@@ -81,18 +85,29 @@ class Stmts{
 class Stmnt{
 	Assign a;
 	Cond c;
+	Cmpd cmpd;
 	public Stmnt(){
 		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
 		case Token.ID:
-			a= new Assign();
+			a = new Assign();
 			break;
 		case Token.KEY_IF:
 			c= new Cond();
 			break;
+		case Token.LEFT_BRACE:
+			Lexer.lex();
+			cmpd = new Cmpd();
 		default:
 			break;
 		}
+	}
+}
+
+class Cmpd {
+	Stmts st;
+	public Cmpd() {
+		st = new Stmts();
 	}
 }
 
