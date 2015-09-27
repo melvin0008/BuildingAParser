@@ -141,7 +141,7 @@ class Cond{
 		ptr1=Code.getcodeptr();		//Save CodePtr to use later for adding imcmpgne "Bytecode number"
 		Lexer.lex();
 		s1=new Stmnt();				
-		if(Lexer.lex()!=Token.KEY_ELSE){	//	if else is called then goto "Bytecode number" is generated
+		if(Lexer.nextToken != Token.KEY_END || Lexer.lex()!=Token.KEY_ELSE){	//	if else is called then goto "Bytecode number" is generated
 			Code.gen(Code.condition(ptr1,true));
 			return;
 		}
@@ -157,7 +157,7 @@ class Loop{
 	Assign a1,a2;
 	Stmnt s;
 	Rexpr r;
-	int cmpPtr,spacePtr;
+	int cmpPtr,spacePtr, tempAssign;
 	int resetCode, resetSpace;
 	public Loop(){
 		Lexer.lex();
@@ -173,13 +173,15 @@ class Loop{
 		Lexer.lex();
 		if(Lexer.nextToken != Token.RIGHT_PAREN)
 			a2=new Assign();
+		tempAssign = Code.getSpacePtr();
 		String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);	//Store assignment stmt in array and reset
 		Lexer.lex();															// array and space ptrs
 		s = new Stmnt();
 		if(assiArray.length != 0)
 			Code.generateAssign(assiArray);				//Restore the generated array after the statements after stmnt has 
 		Code.gen(Code.genGoTo(spacePtr));				//executed and bring space and arrayPtrs up to speed
-		Code.gen(Code.condition(cmpPtr,true));			//Previous statement creates a goto for the for statement
+		if(spacePtr - tempAssign != 0)
+			Code.gen(Code.condition(cmpPtr,true));			//Previous statement creates a goto for the for statement
 	}													//Previous adds the proper line no to Ifcmpgne "Byte Space No"
 }
 
