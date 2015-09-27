@@ -69,7 +69,7 @@ class Stmts{
 	Stmts ss;
 	public Stmts(){
 		s = new Stmnt();
-		if(Lexer.nextToken== Token.KEY_END || Lexer.lex() == Token.KEY_END) { 
+		if(Lexer.nextToken == Token.KEY_END || Lexer.lex() == Token.KEY_END) { 
 			Code.gen(Code.end());
 			return;
 		}
@@ -163,26 +163,25 @@ class Loop{
 	int flag,start1,end1,end2,cmpPtr,spacePtr;
 	int resetCode, resetSpace;
 	public Loop(){
-		flag=0;
 		Lexer.lex();
 		Lexer.lex();
-		a1= new Assign();
+		if(Lexer.nextToken != Token.SEMICOLON)
+			a1= new Assign();
 		spacePtr = Code.getSpacePtr();
 		Lexer.lex();
-			cmpPtr=Code.getcodeptr();
+		cmpPtr=Code.getcodeptr();
 		r= new Rexpr();
 		resetSpace = Code.getSpacePtr();
 		resetCode = Code.getcodeptr();
 		start1=Code.getcodeptr();
 		Lexer.lex();
+		if(Lexer.nextToken != Token.RIGHT_PAREN)
 			a2=new Assign();
-			String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);
-						//end1=Code.getcodeptr();
+		String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);
 		Lexer.lex();
 		s = new Stmnt();
-							//end2=Code.getcodeptr();
-							//Code.loop(start1,end1,end2);
-		Code.generateAssign(assiArray);
+		if(assiArray.length != 0)
+			Code.generateAssign(assiArray);
 		Code.gen(Code.genGoTo(spacePtr));
 		Code.gen(Code.condition(cmpPtr,true));
 	}
@@ -410,10 +409,12 @@ class Code {
 	public static String[] assArrayWithReset(int space, int codePt) {
 		String assignment [] = new String[codeptr-codePt];
 		int temp = 0, count = codePt;
+		if(count != codeptr) {
 		while(count != codeptr)
 			assignment[temp++] = code[count++];
 		codeptr = codePt;
 		spacePtr = space;
+		}
 		return assignment;
 	}
 	public static void generateAssign(String [] array) {
