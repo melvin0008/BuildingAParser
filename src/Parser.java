@@ -16,7 +16,6 @@
 
 import java.lang.System;
 import java.util.*;
-
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
@@ -73,8 +72,7 @@ class Stmts{
 			Code.gen(Code.end());
 			return;
 		}
-		else if(Lexer.nextToken == Token.RIGHT_BRACE) {
-			//Lexer.lex();
+		else if( Lexer.nextToken == Token.RIGHT_BRACE ) {
 			return;
 		}
 		else
@@ -88,7 +86,6 @@ class Stmnt{
 	Cmpd cmpd;
 	Loop l;
 	public Stmnt(){
-		//Lexer.lex();   //Uncomment this
 		switch(Lexer.nextToken) {
 		case Token.ID:
 			a = new Assign();
@@ -386,8 +383,23 @@ class Code {
 	}
 
 	public static void output() {
+		cleanReturn();
 		for (int i=0; i<codeptr; i++)
 			System.out.println(code[i]);
+	}
+	public static void cleanReturn() {
+		String [] cleaner = new String[100];
+		int i;
+		int codeP = codeptr;
+		int count=0;
+		for(i=0;i<codeP-1;i++) {
+			if(!code[i].contains("return"))
+				cleaner[count++] = code[i];
+			else
+				codeptr--;
+		}
+		cleaner[count++] = code[i]; 
+		code = cleaner;
 	}
 	public static String end() {
 		return Code.spacePtr+": return";
