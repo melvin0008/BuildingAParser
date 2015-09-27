@@ -19,8 +19,8 @@ import java.util.*;
 public class Parser {
 	public static void main(String[] args) {
 		System.out.println("Enter an expression, end with \"end\"!\n");
-		Lexer.lex();
-		new Program();
+		Lexer.lex();             //Start Parser
+		new Program();          
 		Code.output();
 	}
 }
@@ -29,15 +29,15 @@ class Program{
 	Decls d;
 	Stmts s;
 	public Program() {
-		d = new Decls();
-     	s=  new Stmts();
+		d = new Decls();         //Declaration
+     	s=  new Stmts();         //Statements
 	}
 }
 
 class Decls{
 	IdList i;
 	public Decls(){
-		if(Lexer.nextToken == Token.KEY_INT)
+		if(Lexer.nextToken == Token.KEY_INT)     //If Key_INT next cursor and call IDlist
 			Lexer.lex();
 		i = new IdList();
 	}
@@ -49,13 +49,13 @@ class IdList {
 	public IdList() {
 		if(Lexer.nextToken==Token.ID){
 			v= Lexer.ident;
-			Code.gen(Code.id(v,Lexer.nextToken));
-			Lexer.lex();
-			if(Lexer.nextToken == Token.SEMICOLON) {
+			Code.gen(Code.id(v,Lexer.nextToken));          //Map the variable
+			Lexer.lex();								
+			if(Lexer.nextToken == Token.SEMICOLON) {	  //If semicolon Lex and return
 				Lexer.lex();   
 				return;
 			}
-			if(Lexer.nextToken == Token.COMMA) {
+			if(Lexer.nextToken == Token.COMMA) {          //If comma, new IDList again
 				Lexer.lex();
 				id = new IdList();
 			}
@@ -69,14 +69,14 @@ class Stmts{
 	public Stmts(){
 		s = new Stmnt();
 		if(Lexer.nextToken == Token.KEY_END || Lexer.lex() == Token.KEY_END) { 
-			Code.gen(Code.end());
+			Code.gen(Code.end());						//Generate return code
 			return;
 		}
-		else if( Lexer.nextToken == Token.RIGHT_BRACE ) {
+		else if( Lexer.nextToken == Token.RIGHT_BRACE ) {     //Right brace when compound statement
 			return;
 		}
 		else
-			ss = new Stmts();
+			ss = new Stmts();								//Recursively call Statements until end
 	}
 }
 
@@ -108,7 +108,7 @@ class Stmnt{
 class Cmpd {
 	Stmts st;
 	public Cmpd() {
-		st = new Stmts();
+		st = new Stmts(); 					//Call Statements again to create Bracket indentation
 	}
 }
 
@@ -123,10 +123,10 @@ class Assign{ //assign  ->  id '=' expr ';'
 			Lexer.lex();
 			if(Lexer.nextToken == Token.ASSIGN_OP){
 				Lexer.lex();
-				e = new Expr();
+				e = new Expr();					//Expression will be called in right side of "=" operator
 			}
 		}
-		Code.gen(Code.id(c,Token.ASSIGN_OP));
+		Code.gen(Code.id(c,Token.ASSIGN_OP));			//Generate "store" Bytecode
 	}
 }
 
@@ -135,21 +135,21 @@ class Cond{
 	Stmnt s1,s2;
 	int ptr1,ptr2;
 	public Cond(){
-		Lexer.lex();
-		Lexer.lex();
+		Lexer.lex();			
+		Lexer.lex();		//Move to next Token after LeftBrace
 		r=new Rexpr();
-		ptr1=Code.getcodeptr();
+		ptr1=Code.getcodeptr();		//Save CodePtr to use later for adding imcmpgne "Bytecode number"
 		Lexer.lex();
-		s1=new Stmnt();
-		if(Lexer.lex()!=Token.KEY_ELSE){
+		s1=new Stmnt();				
+		if(Lexer.lex()!=Token.KEY_ELSE){	//	if else is called then goto "Bytecode number" is generated
 			Code.gen(Code.condition(ptr1,true));
 			return;
 		}
-		ptr2=Code.getcodeptr();
-		Code.gen(Code.condition(ptr1,false));
-		Lexer.lex();
-		s2=new Stmnt();
-		Code.gotofunc(ptr2);
+		ptr2=Code.getcodeptr();				//Called to get the end statement for putting back in If compare Bytecode
+		Code.gen(Code.condition(ptr1,false)); //number
+		Lexer.lex();						
+		s2=new Stmnt();						
+		Code.gotofunc(ptr2);				//Goto statement will be called after stmts in If are generated
 	}	
 }
 
@@ -157,31 +157,30 @@ class Loop{
 	Assign a1,a2;
 	Stmnt s;
 	Rexpr r;
-	int flag,start1,end1,end2,cmpPtr,spacePtr;
+	int cmpPtr,spacePtr;
 	int resetCode, resetSpace;
 	public Loop(){
 		Lexer.lex();
-		Lexer.lex();
+		Lexer.lex();                      //Bring Cursor to initialization of for 
 		if(Lexer.nextToken != Token.SEMICOLON)
-			a1= new Assign();
-		spacePtr = Code.getSpacePtr();
+			a1= new Assign();			//Assignment statement called if only semicolon as no code will be generated for ;
+		spacePtr = Code.getSpacePtr();	
 		Lexer.lex();
 		r= new Rexpr();
 		cmpPtr=Code.getcodeptr();
-		resetSpace = Code.getSpacePtr();
-		resetCode = Code.getcodeptr();
-		start1=Code.getcodeptr();
+		resetSpace = Code.getSpacePtr();		//Get the place where to reset the spacePtr, ie After Imcpgne(Rexpr)
+		resetCode  = Code.getcodeptr();			//	Get the arrayplace to reset codeptr
 		Lexer.lex();
 		if(Lexer.nextToken != Token.RIGHT_PAREN)
 			a2=new Assign();
-		String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);
-		Lexer.lex();
+		String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);	//Store assignment stmt in array and reset
+		Lexer.lex();															// array and space ptrs
 		s = new Stmnt();
 		if(assiArray.length != 0)
-			Code.generateAssign(assiArray);
-		Code.gen(Code.genGoTo(spacePtr));
-		Code.gen(Code.condition(cmpPtr,true));
-	}
+			Code.generateAssign(assiArray);				//Restore the generated array after the statements after stmnt has 
+		Code.gen(Code.genGoTo(spacePtr));				//executed and bring space and arrayPtrs up to speed
+		Code.gen(Code.condition(cmpPtr,true));			//Previous statement creates a goto for the for statement
+	}													//Previous adds the proper line no to Ifcmpgne "Byte Space No"
 }
 
 class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
@@ -190,7 +189,7 @@ class Rexpr{ //rexp -> expr('<'|'>'|'=='|'!=')expr
 	char op;
 	
 	public Rexpr(){
-		e1 = new Expr();
+		e1 = new Expr();			
 		int token = Lexer.nextToken;
 		if ( token == Token.GREATER_OP || token == Token.LESSER_OP || token == Token.EQ_OP || token == Token.NOT_EQ){
 			Lexer.lex();
@@ -296,62 +295,41 @@ class Code {
 	public static String condition(int i,Boolean b){
 		int t;
 		t=i-1;
-		if(b){
+		if(b){				//If true then code for ifcmpg is being generated
 			code[t]=code[t]+" "+spacePtr;
 		}
-		else{
+		else{				//Else code generation for "else" is being created
 			gen(spacePtr+": "+"goto");
 			spacePtr+=3;
 			code[t]=code[t]+" "+spacePtr;
 		}
 		return "";
 	}
-	public static void loop(int s1,int e1,int e2){
-		String [] assin=  new String[e1-s1];
-		int ptr = 0,str1 = s1, count = assin.length;
-		for(int i=s1;i<e1;i++)
-			assin[ptr++] = code[i];
-		while(e2-e1 > 0) {
-			String a[] = code[str1].split(":");
-			String b[] = code[e1].split(":");
-			code[str1] = a[0]+":"+b[b.length-1];
-			e1++;
-			str1++;
-		}
-		while(count-- > 0) {
-			 e2--;
-			String a[] = assin[count].split(":");
-			String b[] = code[e2].split(":");
-			code[e2] = b[0]+":"+a[a.length-1];
-		   
-		}
-	}
-
 	public static void gotofunc(int i){
 		code[i]=code[i]+" "+spacePtr;	
 	}
 	
 	public static String id(Character v, Integer i) {
 		int c;
-		if(hm.containsKey(v)){
+		if(hm.containsKey(v)){		//If key is contained which is false for case of declaration
 			int space = spacePtr++;
 			c=hm.get(v);
 			if(i==Token.ASSIGN_OP){
 				if (c+1 > 3) { 
 					spacePtr++;
-					return space+": istore " + Integer.toString(c+1);
+					return space+": istore " + Integer.toString(c+1);	//istore for case of assignment
 				}
 				return space+": istore_" + Integer.toString(c+1);
 			}
 			else{
 				if (c+1 > 3) {
 					spacePtr++;
-					return space+": iload " + Integer.toString(c+1);
+					return space+": iload " + Integer.toString(c+1);		//Case of loading the variables
 				}	
 				return space+": iload_" + Integer.toString(c+1);
 			}
 		}
-		else {
+		else {				//Variables are being mapped to their values
 			hm.put(v, counter);
 			c=counter;
 			counter++;
@@ -389,8 +367,8 @@ class Code {
 		for (int i=0; i<codeptr; i++)
 			System.out.println(code[i]);
 	}
-	public static void cleanReturn() {
-		String [] cleaner = new String[100];
+	public static void cleanReturn() {		//Removes extra return statement created due to Stmt first condition
+		String [] cleaner = new String[100];	//Makes no other changes to code array
 		int i;
 		int codeP = codeptr;
 		int count=0;
@@ -421,27 +399,27 @@ class Code {
 		codeptr = ptr;
 	}
 	public static String[] assArrayWithReset(int space, int codePt) {
-		String assignment [] = new String[codeptr-codePt];
-		int temp = 0, count = codePt;
-		if(count != codeptr) {
-		while(count != codeptr)
+		String assignment [] = new String[codeptr-codePt]; //Creates array for assignments statements to be returned.
+		int temp = 0, count = codePt;	
+		if(count != codeptr) {			//If count is equal ie No assignment statements then return empty array
+		while(count != codeptr)			//Puts values from codePt to Last code pointer
 			assignment[temp++] = code[count++];
-		codeptr = codePt;
+		codeptr = codePt;				//Resets the space and code pointers
 		spacePtr = space;
 		}
 		return assignment;
 	}
-	public static void generateAssign(String [] array) {
-		String []a={""};
+	public static void generateAssign(String [] array) {	//Puts the assignment statements in the right order along
+		String []a={""};									//with correct space pointers
 		String []b={""};
 		for(int i=0;i<array.length-1;i++) {
-			a =array[i].split(":");
+			a =array[i].split(":");			//"Split a around : and similar with the next array
 			b = array[i+1].split(":");
-			int diff = Integer.parseInt(b[0]) - Integer.parseInt(a[0]);
-			code[codeptr++] =  spacePtr+":"+a[a.length-1];
-			spacePtr+=diff;
-		}
-			code[codeptr++] = spacePtr+":"+b[b.length-1];
+			int diff = Integer.parseInt(b[0]) - Integer.parseInt(a[0]);	//Calculate next space ptr difference between two
+			code[codeptr++] =  spacePtr+":"+a[a.length-1];				//successive bytecodes and then increment the space
+			spacePtr+=diff;												//Ptr by this amount
+		}																//In previous statement 419, correct Bytenumber is
+			code[codeptr++] = spacePtr+":"+b[b.length-1];				//being generated
 			spacePtr++;
 	}
 }
