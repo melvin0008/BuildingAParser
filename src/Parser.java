@@ -1,5 +1,5 @@
 /* 		OBJECT-ORIENTED RECOGNIZER FOR SIMPLE EXPRESSIONS
- program ->  decls stmts end
+ 	  program ->  decls stmts end
       decls   ->  int idlist ';'
       idlist  ->  id [',' idlist ]
       stmts   ->  stmt [ stmts ]
@@ -161,36 +161,30 @@ class Loop{
 	Stmnt s;
 	Rexpr r;
 	int flag,start1,end1,end2,cmpPtr,spacePtr;
+	int resetCode, resetSpace;
 	public Loop(){
 		flag=0;
 		Lexer.lex();
 		Lexer.lex();
-//		if(Lexer.nextToken!=Token.SEMICOLON){
-			a1= new Assign();
-			spacePtr = Code.getSpacePtr();
-//		}
-//		if(Lexer.nextToken!=Token.SEMICOLON){
-			Lexer.lex();
-			cmpPtr=Code.getcodeptr();    //New code
-			r= new Rexpr();
-//			Lexer.lex();
-//		}
+		a1= new Assign();
+		spacePtr = Code.getSpacePtr();
+		Lexer.lex();
+			cmpPtr=Code.getcodeptr();
+		r= new Rexpr();
+		resetSpace = Code.getSpacePtr();
+		resetCode = Code.getcodeptr();
 		start1=Code.getcodeptr();
 		Lexer.lex();
-//		if(Lexer.nextToken!=Token.RIGHT_BRACE){
 			a2=new Assign();
-//			Lexer.lex();
-//		}
-		end1=Code.getcodeptr();
+			String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);
+						//end1=Code.getcodeptr();
 		Lexer.lex();
 		s = new Stmnt();
-		end2=Code.getcodeptr();
-		Code.loop(start1,end1,end2);
+							//end2=Code.getcodeptr();
+							//Code.loop(start1,end1,end2);
+		Code.generateAssign(assiArray);
 		Code.gen(Code.genGoTo(spacePtr));
 		Code.gen(Code.condition(cmpPtr,true));
-//		if(flag==1){
-//			
-//		}
 	}
 }
 
@@ -379,8 +373,6 @@ class Code {
 		}
 	}
 	
-	
-	
 	public static String opcoderexpr(int op) {
 		int a = spacePtr;
 		spacePtr+=3;
@@ -408,5 +400,33 @@ class Code {
 	}
 	public static int getSpacePtr() {
 		return spacePtr;
+	}
+	public static void setSpacePtr(int spacePoint) {
+		spacePtr = spacePoint;
+	}
+	public static void setCodePtr(int ptr) {
+		codeptr = ptr;
+	}
+	public static String[] assArrayWithReset(int space, int codePt) {
+		String assignment [] = new String[codeptr-codePt];
+		int temp = 0, count = codePt;
+		while(count != codeptr)
+			assignment[temp++] = code[count++];
+		codeptr = codePt;
+		spacePtr = space;
+		return assignment;
+	}
+	public static void generateAssign(String [] array) {
+		String []a={""};
+		String []b={""};
+		for(int i=0;i<array.length-1;i++) {
+			a =array[i].split(":");
+			b = array[i+1].split(":");
+			int diff = Integer.parseInt(b[0]) - Integer.parseInt(a[0]);
+			code[codeptr++] =  spacePtr+":"+a[a.length-1];
+			spacePtr+=diff;
+		}
+			code[codeptr++] = spacePtr+":"+b[b.length-1];
+			spacePtr++;
 	}
 }
