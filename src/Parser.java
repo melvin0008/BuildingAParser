@@ -86,17 +86,17 @@ class Stmnt{
 	Cmpd cmpd;
 	Loop l;
 	public Stmnt(){
-		switch(Lexer.nextToken) {
+		switch(Lexer.nextToken) {              //Statement will be either
 		case Token.ID:
-			a = new Assign();
+			a = new Assign();                  // Assign or
 			break;
-		case Token.KEY_IF:
+		case Token.KEY_IF:                     // Cond or
 			c= new Cond();
 			break;
-		case Token.KEY_FOR:
+		case Token.KEY_FOR:                    //For or
 			l=new Loop();
 			break;
-		case Token.LEFT_BRACE:
+		case Token.LEFT_BRACE:                //Cmpnd
 			Lexer.lex();
 			cmpd = new Cmpd();
 		default:
@@ -133,20 +133,20 @@ class Assign{ //assign  ->  id '=' expr ';'
 class Cond{
 	Rexpr r;
 	Stmnt s1,s2;
-	int ptr,ptr2;
+	int ptr1,ptr2;
 	public Cond(){
-		Lexer.lex();//Change this
 		Lexer.lex();
-		ptr=Code.getcodeptr();
+		Lexer.lex();
 		r=new Rexpr();
+		ptr1=Code.getcodeptr();
 		Lexer.lex();
 		s1=new Stmnt();
 		if(Lexer.lex()!=Token.KEY_ELSE){
-			Code.gen(Code.condition(ptr,true));
+			Code.gen(Code.condition(ptr1,true));
 			return;
 		}
 		ptr2=Code.getcodeptr();
-		Code.gen(Code.condition(ptr,false));
+		Code.gen(Code.condition(ptr1,false));
 		Lexer.lex();
 		s2=new Stmnt();
 		Code.gotofunc(ptr2);
@@ -166,8 +166,8 @@ class Loop{
 			a1= new Assign();
 		spacePtr = Code.getSpacePtr();
 		Lexer.lex();
-		cmpPtr=Code.getcodeptr();
 		r= new Rexpr();
+		cmpPtr=Code.getcodeptr();
 		resetSpace = Code.getSpacePtr();
 		resetCode = Code.getcodeptr();
 		start1=Code.getcodeptr();
@@ -294,13 +294,15 @@ class Code {
 	}
 	
 	public static String condition(int i,Boolean b){
+		int t;
+		t=i-1;
 		if(b){
-			code[i+2]=code[i+2]+" "+spacePtr;
+			code[t]=code[t]+" "+spacePtr;
 		}
 		else{
 			gen(spacePtr+": "+"goto");
 			spacePtr+=3;
-			code[i+2]=code[i+2]+" "+spacePtr;
+			code[t]=code[t]+" "+spacePtr;
 		}
 		return "";
 	}
