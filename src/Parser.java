@@ -64,10 +64,10 @@ class IdList {
 }
 
 class Stmts{
-	Stmnt s;
+	Stmt s;
 	Stmts ss;
 	public Stmts(){
-		s = new Stmnt();
+		s = new Stmt();
 		if(Lexer.nextToken == Token.KEY_END || Lexer.lex() == Token.KEY_END) { 
 			Code.gen(Code.end());						//Generate return code
 			return;
@@ -80,18 +80,18 @@ class Stmts{
 	}
 }
 
-class Stmnt{
+class Stmt{
 	Assign a;
 	Cond c;
 	Cmpd cmpd;
 	Loop l;
-	public Stmnt(){
+	public Stmt(){
 		switch(Lexer.nextToken) {              //Statement will be either
 		case Token.ID:
 			a = new Assign();                  // Assign or
 			break;
 		case Token.KEY_IF:                     // Cond or
-			c= new Cond();
+			c= new Cond(); 
 			break;
 		case Token.KEY_FOR:                    //For or
 			l=new Loop();
@@ -132,7 +132,7 @@ class Assign{ //assign  ->  id '=' expr ';'
 
 class Cond{
 	Rexpr r;
-	Stmnt s1,s2;
+	Stmt s1,s2;
 	int ptr1,ptr2;
 	public Cond(){
 		Lexer.lex();			
@@ -140,22 +140,22 @@ class Cond{
 		r=new Rexpr();
 		ptr1=Code.getcodeptr();		//Save CodePtr to use later for adding imcmpgne "Bytecode number"
 		Lexer.lex();
-		s1=new Stmnt();				
-		if(Lexer.nextToken != Token.KEY_END || Lexer.lex()!=Token.KEY_ELSE){	//	if else is called then goto "Bytecode number" is generated
+		s1=new Stmt();				
+		if(Lexer.nextToken != Token.KEY_END && Lexer.lex()!=Token.KEY_ELSE){	//	if else is called then goto "Bytecode number" is generated
 			Code.gen(Code.condition(ptr1,true));
 			return;
 		}
 		ptr2=Code.getcodeptr();				//Called to get the end statement for putting back in If compare Bytecode
 		Code.gen(Code.condition(ptr1,false)); //number
 		Lexer.lex();						
-		s2=new Stmnt();						
+		s2=new Stmt();						
 		Code.gotofunc(ptr2);				//Goto statement will be called after stmts in If are generated
 	}	
 }
 
 class Loop{
 	Assign a1,a2;
-	Stmnt s;
+	Stmt s;
 	Rexpr r;
 	int cmpPtr,spacePtr, tempAssign;
 	int resetCode, resetSpace;
@@ -176,9 +176,9 @@ class Loop{
 		tempAssign = Code.getSpacePtr();
 		String [] assiArray = Code.assArrayWithReset(resetSpace, resetCode);	//Store assignment stmt in array and reset
 		Lexer.lex();															// array and space ptrs
-		s = new Stmnt();
+		s = new Stmt();
 		if(assiArray.length != 0)
-			Code.generateAssign(assiArray);				//Restore the generated array after the statements after stmnt has 
+			Code.generateAssign(assiArray);				//Restore the generated array after the statements after Stmt has 
 		Code.gen(Code.genGoTo(spacePtr));				//executed and bring space and arrayPtrs up to speed
 		if(spacePtr - tempAssign != 0)
 			Code.gen(Code.condition(cmpPtr,true));			//Previous statement creates a goto for the for statement
