@@ -3,6 +3,7 @@
 
 Parser will generate java bytecode for the following grammar
 
+```
 program ->  decls stmts end   
 decls   ->  int idlist ';'   
 idlist  ->  id [',' idlist ]   
@@ -16,3 +17,4 @@ rexp -> expr('<'|'>'|'=='|'!=')expr
 expr -> term [ ('+' | '-') expr ]    
 term -> factor [ ('*' | '/') term ]    
 factor -> int_lit | id | '(' expr ')'   
+```
